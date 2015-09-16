@@ -1,18 +1,30 @@
-function[MR] = fourterminal_MR_B_plotter(N, M, nsd,nmean,H)
+function[MR] = fourterminal_MR_B_plotter(nsd,nmean,musd,mumean,H)
 
-mu=1;
-B=mu*H;
-rho_H0=fourterminal_PL_EMT(N,M,nsd,nmean,0);
+%plots MR against H/H_0
+rho_H0=fourterminal_PL_EMT(nsd,nmean,musd,mumean,0);
+rho_base_H0=fourterminal_PL_EMT(0,1,0,1,0);
 
-%preallocate rho_H, MR
+%preallocation
 rho_H=zeros(1,length(H));
+rho_base_H=zeros(1,length(H));
 MR=zeros(1,length(H));
+MR_base=zeros(1,length(H));
+MR_subtracted=zeros(1,length(H));
 
-    for i=1:length(H)
-        rho_H(i)=fourterminal_PL_EMT(N,M,nsd,nmean,H(i));
-        MR(i)=(rho_H(i)-rho_H0)./rho_H0;
+    parfor i=1:length(H)
+        rho_H(i)=fourterminal_PL_EMT(nsd,nmean,musd,mumean,H(i));
+        MR(i)=(rho_H(i)-rho_H0)./(rho_H0);
+        rho_base_H(i)=fourterminal_PL_EMT(0,1,0,1,H(i));
+        MR_base(i)=(rho_base_H(i)-rho_base_H0)./(rho_base_H0);
+        MR_subtracted(i)=MR(i)-MR_base(i)
     end
 
-plot(B,MR)
+plot(H.*mumean,MR);
+% plot(H.*mumean,MR_subtracted)
+% % plot(H,MR*3.4)
+% % plot(H,MR*14.3)
+title('RRN MR vs. µB'); 
+xlabel('µB');
+ylabel('MR');
 
 end
