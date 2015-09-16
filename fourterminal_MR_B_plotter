@@ -1,0 +1,18 @@
+function[MR] = fourterminal_MR_B_plotter(N, M, nsd,nmean,H)
+
+mu=1;
+B=mu*H;
+rho_H0=fourterminal_PL_EMT(N,M,nsd,nmean,0);
+
+%preallocate rho_H, MR
+rho_H=zeros(1,length(H));
+MR=zeros(1,length(H));
+
+    for i=1:length(H)
+        rho_H(i)=fourterminal_PL_EMT(N,M,nsd,nmean,H(i));
+        MR(i)=(rho_H(i)-rho_H0)./rho_H0;
+    end
+
+plot(B,MR)
+
+end
