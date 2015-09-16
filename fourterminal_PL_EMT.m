@@ -1,29 +1,43 @@
-%N*M resistors,each with 8 variables:i1,i2,i3,i4,j1,j2,j3,j4
+%N*M resistors,each with 8 variables:i1,i2,i3,i4,v1,v2,v3,v4
 %N*M*8 variables
 %N*M*8 equations
 
-function[r_eq]=fourterminal_PL_EMT(N,M,nsd,nmean,H)
+function[r_eq]=fourterminal_PL_EMT(nsd,nmean,musd,mumean,H)
 
 %constants
+N=11;
+M=11;
+NoffSet= 0; 1E-6;
 
     Vx=1;
 
     rng(0,'twister')
-    musd = 0;
-    mumean = 1;
     
     muValues=musd.*randn(1,N*M) + mumean;
         
-    nValues = nsd.*randn(1,N*M) + nmean;
+    rng(0)
+    nValues = nsd.*(randn(1,N*M)).^2 + nmean;
     
-    rhoValues = abs(1./(nValues.*muValues));
-    
+    eValues = ones(size(muValues));
+
+    rhoValues = abs(1./(nValues.*muValues.*eValues));
+
     t=1;
     rValues=rhoValues./(pi*t);
+
+%     rValues=(nsd.*randn(1,N*M)+ nmean).^2 + NoffSet;
+   
+    % display(rValues); % remove me after debugged
+
     BValues = muValues.*H;
+    for i=1:length(muValues)
+        if muValues(i) < 0
+            BValues(i) = -BValues(i);
+        end
+    end
     
     phi=0.14;
-    g=1/phi;
+    g = 0.05/phi;
     
     %a=-g+(pi/4)*B;
         aValues= -g+(pi/4).*BValues;
@@ -142,7 +156,7 @@ function[r_eq]=fourterminal_PL_EMT(N,M,nsd,nmean,H)
         end
         
 %KCL equations: i1+i2+i3+i4 at each resistor=0
-    %there are NM KCL equations
+    %there are N*M KCL equations
     
     m=1;
     for n=4*M*N+1:5*M*N
@@ -180,10 +194,10 @@ function[r_eq]=fourterminal_PL_EMT(N,M,nsd,nmean,H)
                 CoeffsMatrix(n+2,m+6*N*M)=1; %v3
                 CoeffsMatrix(n+2,m+7*N*M)=-1; %v4
                 
-%                 CoeffsMatrix(n+3,m)=rValues(m)*bValues(m); %fourth i1
-%                 CoeffsMatrix(n+3,m+N*M)=rValues(m)*cValues(m); %fourth i2
-%                 CoeffsMatrix(n+3,m+2*N*M)=rValues(m)*dValues(m); %fourth i3
-%                 CoeffsMatrix(n+3,m+3*N*M)=rValues(m)*aValues(m); %fourth i4
+%                 CoeffsMatrix(n+3,m)=sValues(m)*bValues(m); %fourth i1
+%                 CoeffsMatrix(n+3,m+N*M)=sValues(m)*cValues(m); %fourth i2
+%                 CoeffsMatrix(n+3,m+2*N*M)=sValues(m)*dValues(m); %fourth i3
+%                 CoeffsMatrix(n+3,m+3*N*M)=sValues(m)*aValues(m); %fourth i4
 %                 CoeffsMatrix(n+3,m+7*N*M)=-1; %v4
 %                 CoeffsMatrix(n+3,m+4*N*M)=1; %v1
                 m=m+1;
@@ -196,6 +210,7 @@ Values=S\ConstantsMatrix;
 % Values=CoeffsMatrix\ConstantsMatrix;
 SumInputI=sum(Values(2*N*M+M:M:3*N*M));
 r_eq=Vx/SumInputI;
+hist(rValues)
 
 % Values
 
