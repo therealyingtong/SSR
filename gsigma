@@ -1,0 +1,6 @@
+function[g] = gsigma_homog(n, B)
+s = sign(n);
+N = abs(n);
+mu=1;
+
+g = s.*(N.*mu./(1+mu.^2.*B.^2).*mu.*B);
