@@ -1,0 +1,98 @@
+function[Ans1,Ans2] = EMTh(n, nrms, B1)
+
+n=abs(n);
+
+Ans1 = zeros(1, max(length(n)));
+Ans2 = zeros(1, max(length(n)));
+
+f = 5; %Number of std deviations in range of integration for Gaussian
+
+j = 0;
+
+for B=B1,
+
+    for ng = n,
+        j = j + 1;
+
+
+
+        % Gaussian distribution
+         p=@(nn)1./(1/nrms/sqrt(2*pi)).*(exp(-1*((nn-ng).^2)/(2*nrms^2)));
+
+
+        %2D EMT equations
+        num1 = @(nn, xE, yE, B) p(nn) .* (fsigma_homog((nn), B).^2 + (gsigma_homog((nn), B) - yE).^2) ./ ((fsigma_homog((nn), B) + xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+        denom1 = @(nn, xE, yE, B) p(nn) .*xE./((fsigma_homog((nn), B) + xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+
+        num2 = @(nn, xE, yE, B)p(nn) .*gsigma_homog((nn), B)./ ((fsigma_homog((nn), B) + xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+        denom2 = @(nn, xE, yE, B) p(nn)./ ((fsigma_homog((nn), B) + xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+         
+        %3D EMT equations
+%         num1 = @(nn, xE, yE, B) p(nn) .* (fsigma_homog((nn), B).^2 + fsigma_homog((nn), B)*xE + (gsigma_homog((nn), B) - yE).^2) ./ ((fsigma_homog((nn), B) + 2*xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+%         denom1 = @(nn, xE, yE, B) p(nn) .*2.*xE./((fsigma_homog((nn), B) + 2*xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+%     
+%         num2 = @(nn, xE, yE, B)p(nn) .*gsigma_homog((nn), B)./ ((fsigma_homog((nn), B) + 2*xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+%         denom2 = @(nn, xE, yE, B) p(nn)./ ((fsigma_homog((nn), B) + 2*xE).^2 + (gsigma_homog((nn), B) - yE).^2);
+%      
+
+    
+
+        %Integrating f
+        llim = ng - f * nrms;
+        rlim = ng + f * nrms;
+
+        %g = @(y) quadgk(@(mu) f(mu, y), llim, rlim, tol);
+        fnum1 = @(xE, yE, B) quadgk(@(nn) num1(nn, xE, yE, B), llim, rlim);
+        fdenom1 = @(xE, yE, B) quadgk(@(nn) denom1(nn, xE, yE, B), llim, rlim);
+
+        fnum2 = @(xE, yE, B)quadgk(@(nn)num2(nn, xE, yE, B), llim, rlim);
+        fdenom2 = @(xE, yE, B) quadgk(@(nn) denom2(nn, xE, yE, B), llim, rlim);
+        %fnum = @(y) quadgk(@(nn) num(nn, y), llim, rlim);
+        %fdenom = @(y) quadgk(@(nn) denom(nn, y), llim, rlim);
+        fiter1 = @(xE, yE, B) fnum1(xE, yE, B) ./ fdenom1(xE, yE, B);
+        fiter2 = @(xE, yE, B) fnum2(xE, yE, B)./fdenom2(xE, yE, B);
+
+        %f = @(y) quadgk(@(mu) integrand(mu, y), llim, rlim, tol);
+
+        %Trial sigmaemt
+        %sigma0 = sigmacrude(ng,sigmas,nimp,d,rs);
+        %sigma0 =  fsigma(ng) .* (abs(n1) > nstar) + fsigma(nstar + nshift) .* (abs(n1) <= nstar);
+        %y1 =  fsigma(ng) .* (abs(n1) > nstar) + fsigma(nstar + nshift) .* (abs(n1) <= nstar);
+        if ng>nrms
+                xE1 = fsigma_homog(ng, B);
+                yE1 = gsigma_homog(ng, B);
+        else 
+                xE1 = fsigma_homog(nrms, B);
+                yE1 = gsigma_homog(nrms, B);
+        end
+
+        %Solve for sigmaemt
+        %y1 = fsolve(g, sigma0, options);
+        delta = 1e-4;
+        prevxE1 = xE1;
+        prevyE1 = yE1;
+        xE1 = fiter1(xE1, yE1, B);
+        yE1 = fiter2(xE1, yE1, B);
+        while (abs((xE1 - prevxE1)/xE1) > delta) || (abs((yE1 - prevyE1)/yE1) > delta) 
+            prevxE1 = xE1;
+            prevyE1 = yE1;
+            xE1 = fiter1(xE1,yE1, B);
+            yE1 = fiter2(xE1,yE1, B);
+            %disp(['xE1              ' num2str(xE1)]);
+            %disp(['delta  x            ' num2str((xE1 - prevxE1)/xE1)]);
+            %disp(['yE1              ' num2str(yE1)]);
+            %disp(['delta y             ' num2str((yE1 - prevyE1)/yE1)]);
+
+        end
+        %disp(j);
+
+        %Put y into row vector;
+        Ans1(j) = real(xE1);
+        Ans2(j) = real(yE1);
+
+
+        %disp(y1);
+        %disp(quadgk(@(mu) p(mu) .* (fsigma(mu) - y1) ./ (fsigma(mu) + y1), llim, rlim, tol));
+    end
+
+end
