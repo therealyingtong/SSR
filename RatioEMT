@@ -1,0 +1,25 @@
+function[r]=ratio(R, nrms)
+
+mu = 1; %change mu in both fsigma and gsigma
+
+bcrit=zeros(1,length(R));
+
+%calculate bcrit and MR(bcrit)
+
+parfor i = 1:length(R)
+    bcrit(i)=bisection(R(i),nrms,0.01);
+    MRcrit(i) = EMTh(R(i), nrms, bcrit(i));
+end
+
+%plot Bcrit vs Ratio
+figure
+plot(R/nrms, mu.*bcrit)
+
+%plot MR vs ratio
+figure
+plot(R/nrms, MRcrit)
+
+%save data
+R_nrms = R/nrms;
+save bcritratiohighrange.mat bcrit R_nrms
+save MRcritratiohighrange.mat MRcrit R_nrms
