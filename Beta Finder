@@ -1,0 +1,17 @@
+function[beta]= findbeta()
+
+for i=1:100
+nrms(i)= i*1; %adjust nrms 
+B=0:50:1000;%to be adjusted: look for linear range of B
+[a,b]=sigmaemtBsimplesc(1,nrms(i),B);
+rho_xx=a./(a.^2+b.^2);
+rho_0=a(1)./(a(1).^2+b(1).^2);
+MR=(rho_xx-rho_0)./rho_0;
+beta(i)= MR(length(MR))./B(length(B));%pick the last value
+end
+
+plot(1./nrms, beta);
+
+%Things to check for this script... 1) Is the B large enough. Plot
+%separately MR vs B for these n and nrms and check that the second half is
+%linear. 2) 
