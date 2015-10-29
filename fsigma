@@ -1,0 +1,9 @@
+function[f] = fsigma_homog(n, B)
+
+N=abs(n);
+
+mu=1;
+
+f = N.*mu./(1+mu.^2.*B.^2);
+   
+   
